@@ -4,6 +4,7 @@ import operator
 
 from Assignment.dataset import TextData
 
+
 class Document(TextData):
 
     def __init__(self, doc_id):
@@ -18,6 +19,10 @@ class Document(TextData):
         return self.bag_of_words
 
     def get_category(self):
-        doc_index = self.dataset.class_df['class'].loc[self.dataset.class_df['doc_id'] == doc_id].index[0]
-        doc_class = self.dataset.class_df['class'][doc_index]
+        if TextData.article_labels is None:
+            print("You need to define your dataset first")
+            return ""
+
+        doc_index = TextData.article_labels['class'].loc[TextData.article_labels['doc_id'] == self.doc_id].index[0]
+        doc_class = TextData.article_labels['class'][doc_index]
         return doc_class

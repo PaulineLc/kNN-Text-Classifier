@@ -1,11 +1,23 @@
 import pandas as pd
 
+
 class TextData:
 
-    def __init__(self, data_file, class_file):
-        self.df = pd.read_csv(data_file,
-                                    sep=" ",
-                                    skiprows=2,
-                                    names=['doc_id', 'term_id', 'nb_occurences'])
-        self.class_df = pd.read_csv(class_file,
-                                      names=['doc_id', 'class'])
+    article_data = None
+    article_labels = None
+
+    @classmethod
+    def define_article_data(cls, data_file):
+        TextData.article_data = pd.read_csv(data_file,
+                                                 sep=" ",
+                                                 skiprows=2,
+                                                 names=['doc_id', 'term_id', 'nb_occurences'])
+
+    @classmethod
+    def define_article_labels(cls, label_file):
+        TextData.article_labels = pd.read_csv(label_file,
+                                            names=['doc_id', 'class'])
+
+    @classmethod
+    def some_test(cls):
+        TextData.test += 1

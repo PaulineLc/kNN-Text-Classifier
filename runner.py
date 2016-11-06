@@ -12,8 +12,12 @@ from Assignment.dataset import TextData
 from Assignment.text_data import Document
 from Assignment.classifier import TextClassifier
 
-my_dataset = TextData('data/news_articles.mtx', 'data/news_articles.labels')
+TextData.define_article_data(data_file='data/news_articles.mtx')
+TextData.define_article_labels('data/news_articles.labels')
 my_document = Document(500)
-clf = TextClassifier(my_document, my_dataset)
-clf.create_similarity_dic()
-print(clf.classify())
+
+print(my_document.get_category())
+
+# clf = TextClassifier(my_document, my_dataset)
+# clf.create_similarity_dic()
+# print(clf.classify())
