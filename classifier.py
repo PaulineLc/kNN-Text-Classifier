@@ -17,12 +17,8 @@ class TextClassifier:
     def define_training_set(cls, dataset):
         TextClassifier.training_set = dataset
 
-    def look_up_cat(self, doc_id):
-        doc_index = self.dataset.class_df['class'].loc[self.dataset.class_df['doc_id'] == doc_id].index[0]
-        doc_class = self.dataset.class_df['class'][doc_index]
-        return doc_class
-
     def classify(self, weighted=False):
+        # TODO: redesign to remove recursion
         print("Enter the number of neighbours (an integer >= 1):")
         try:
             k = int(input())
@@ -35,11 +31,11 @@ class TextClassifier:
             # Todo: add weighted method
             pass
         else:
-            return self.classify_noweight(k)
+            return self.classify_no_weight(k)
 
     def create_similarity_dic(self):
         self.document.create_bag_of_words()
-        for doc_id in TextData.article_data['doc_id']:
+        for doc_id in TextData.article_labels['doc_id']:
             if doc_id == self.document.doc_id:
                 continue  # ignore entry if it is the same document...
             curr_doc = Document(doc_id)
@@ -48,17 +44,19 @@ class TextClassifier:
             self.similarity[int(doc_id)] = curr_cos # TODO: try remove the cast to integer - is it useful?
         return self.similarity
 
-    def classify_noweight(self, k):
+    def classify_no_weight(self, k):
         # takes the k nearest neighbours
+        # sort dictionary of articles by their cosine
+        # TODO: improve this - when you call a recursion with k-1 you don't need to execute it all again.
         sorted_similarities = sorted(self.similarity.items(), key=operator.itemgetter(1), reverse=True)
         for i in range(k):
             curr_doc_id = sorted_similarities[i][0]
-            curr_doc_cat = self.look_up_cat(curr_doc_id)
+            curr_doc_cat = Document(curr_doc_id).get_category()
             self.count_classes[curr_doc_cat] += 1
-        highest = max(self.count_classes.values())
-        potential_classes = [k for k,v in self.count_classes.items() if v == highest]
+        highest = max(self.count_classes.values()) # get max value
+        potential_classes = [k for k,v in self.count_classes.items() if v == highest]  # get all entries with max value
         if len(potential_classes) > 1:
-            k -= 1 # classify text using 1 less neighbours until there are either no equality
+            k -= 1  # classify text using 1 less neighbours until there are either no equality
             return self.classify(k)
         return potential_classes[0]
 

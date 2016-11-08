@@ -19,4 +19,4 @@ my_document = Document(666)
 
 clf = TextClassifier(my_document)
 clf.create_similarity_dic()
-# print(clf.classify())
+print(clf.classify())
