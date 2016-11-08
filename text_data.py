@@ -1,7 +1,3 @@
-import pandas as pd
-import math
-import operator
-
 from Assignment.dataset import TextData
 
 

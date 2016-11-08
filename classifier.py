@@ -4,6 +4,7 @@ import operator
 from Assignment.text_data import Document
 from Assignment.dataset import TextData
 
+
 class TextClassifier:
 
     training_set = None
@@ -35,7 +36,7 @@ class TextClassifier:
 
     def create_similarity_dic(self):
         self.document.create_bag_of_words()
-        for doc_id in TextData.article_labels['doc_id']:
+        for doc_id in TextClassifier.training_set:
             if doc_id == self.document.doc_id:
                 continue  # ignore entry if it is the same document...
             curr_doc = Document(doc_id)
@@ -69,6 +70,6 @@ class TextClassifier:
                 continue # skip if term not in other document
             numerator += self.document.bag_of_words[term] * other_occur
         denominator_1 = math.sqrt(sum(map(lambda x:x**2, other_doc.bag_of_words.values())))
-        denominator_2 = math.sqrt(sum(map(lambda x:x**2, self.document.bag_of_words)))
+        denominator_2 = math.sqrt(sum(map(lambda x:x**2, self.document.bag_of_words.values())))
 
         return float(numerator / (denominator_1 * denominator_2))
