@@ -17,9 +17,6 @@ TextData.define_article_data(data_file='data/news_articles.mtx')
 TextData.define_article_labels('data/news_articles.labels')
 my_document = Document(666)
 
-print(my_document.get_category())
-print(my_document.create_bag_of_words())
-
-# clf = TextClassifier(my_document, my_dataset)
-# clf.create_similarity_dic()
+clf = TextClassifier(my_document)
+clf.create_similarity_dic()
 # print(clf.classify())

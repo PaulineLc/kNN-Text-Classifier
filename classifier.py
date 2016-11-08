@@ -2,20 +2,20 @@ import math
 import operator
 
 from Assignment.text_data import Document
+from Assignment.dataset import TextData
 
 class TextClassifier:
 
     training_set = None
 
-    def __init__(self, document, dataset):
+    def __init__(self, document):
         self.document = document
-        self.dataset = dataset
         self.similarity = {}
-        self.count_classes= {'business': 0, 'politics': 0, 'sport': 0, 'technology': 0}
+        self.count_classes = {'business': 0, 'politics': 0, 'sport': 0, 'technology': 0}
 
     @classmethod
-    def define_training_set(dataset):
-        training_set = dataset
+    def define_training_set(cls, dataset):
+        TextClassifier.training_set = dataset
 
     def look_up_cat(self, doc_id):
         doc_index = self.dataset.class_df['class'].loc[self.dataset.class_df['doc_id'] == doc_id].index[0]
@@ -28,18 +28,28 @@ class TextClassifier:
             k = int(input())
         except ValueError:
             print("Please enter an integer >= 1")
-            self.classify()
         if k < 1:
             print("k must be >1")
             self.classify()
         if weighted:
-            #Todo: add weighted method
+            # Todo: add weighted method
             pass
         else:
             return self.classify_noweight(k)
 
+    def create_similarity_dic(self):
+        self.document.create_bag_of_words()
+        for doc_id in TextData.article_data['doc_id']:
+            if doc_id == self.document.doc_id:
+                continue  # ignore entry if it is the same document...
+            curr_doc = Document(doc_id)
+            curr_doc.create_bag_of_words()
+            curr_cos = self.calculate_cosine(curr_doc)
+            self.similarity[int(doc_id)] = curr_cos # TODO: try remove the cast to integer - is it useful?
+        return self.similarity
+
     def classify_noweight(self, k):
-        #takes the k nearest neighboors
+        # takes the k nearest neighbours
         sorted_similarities = sorted(self.similarity.items(), key=operator.itemgetter(1), reverse=True)
         for i in range(k):
             curr_doc_id = sorted_similarities[i][0]
@@ -48,20 +58,9 @@ class TextClassifier:
         highest = max(self.count_classes.values())
         potential_classes = [k for k,v in self.count_classes.items() if v == highest]
         if len(potential_classes) > 1:
-            k -= 1 # classify text using 1 less neighboors until there are either no equality
+            k -= 1 # classify text using 1 less neighbours until there are either no equality
             return self.classify(k)
         return potential_classes[0]
-
-    def create_similarity_dic(self):
-        self.document.create_bag_of_words(self.dataset)
-        for doc_id in self.dataset.class_df['doc_id']:
-            if doc_id == self.document.doc_id:
-                continue #ignore entry if it is the same document...
-            curr_doc = Document(doc_id)
-            curr_doc.create_bag_of_words(self.dataset)
-            curr_cos = self.calculate_cosine(curr_doc)
-            self.similarity[int(doc_id)] = curr_cos
-        return self.similarity
 
     def calculate_cosine(self, other_doc):
         numerator = 0
@@ -69,7 +68,7 @@ class TextClassifier:
             try:
                 other_occur = other_doc.bag_of_words[term]
             except KeyError:
-                continue #skip if term not in other document
+                continue # skip if term not in other document
             numerator += self.document.bag_of_words[term] * other_occur
         denominator_1 = math.sqrt(sum(map(lambda x:x**2, other_doc.bag_of_words.values())))
         denominator_2 = math.sqrt(sum(map(lambda x:x**2, self.document.bag_of_words)))

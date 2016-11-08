@@ -23,7 +23,6 @@ class Document(TextData):
         if TextData.article_labels is None:
             print("You need to define your dataset first")
             return ""
-
         doc_index = TextData.article_labels['class'].loc[TextData.article_labels['doc_id'] == self.doc_id].index[0]
         label = TextData.article_labels['class'][doc_index]
         self.label = label
