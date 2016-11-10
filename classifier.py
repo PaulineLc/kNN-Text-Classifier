@@ -1,5 +1,6 @@
 import math
 import operator
+import random
 
 from Assignment.text_data import Document
 
@@ -90,5 +91,10 @@ class TextClassifier:
 
         return float(numerator / (denominator_1 * denominator_2))
 
-    def get_accuracy(self, data_set):
-        pass
+    @staticmethod
+    def get_accuracy(data_set):
+        for document in data_set:
+            clf = TextClassifier(Document(document))
+            clf.create_similarity_dic()
+            k = random.randint(1,10)
+            clf.classify_no_weight(k)
