@@ -84,7 +84,7 @@ class TextClassifier:
             try:
                 other_occur = TextClassifier.all_bags_of_words[other_doc_id][term]
             except KeyError:
-                continue # skip if term not in other document
+                continue  # skip if term not in other document
             numerator += self.document.bag_of_words[term] * other_occur
         denominator_1 = math.sqrt(sum(map(lambda x:x**2, TextClassifier.all_bags_of_words[other_doc_id].values())))
         denominator_2 = math.sqrt(sum(map(lambda x:x**2, self.document.bag_of_words.values())))
@@ -92,16 +92,17 @@ class TextClassifier:
         return float(numerator / (denominator_1 * denominator_2))
 
     @staticmethod
-    def get_accuracy(data_set):
+    def get_accuracy(data_set, weighted=False):
         nb_accurate_results = 0
         for document in data_set:
             clf = TextClassifier(Document(document))
             clf.create_similarity_dic()
             k = random.randint(1,10)
-            predicted_class = clf.classify_no_weight(k)
+            if weighted:
+                predicted_class = clf.classify_no_weight(k)
+            else:
+                predicted_class = clf.classify_weighted(k)
             actual_class = Document(document).get_category()
             if predicted_class == actual_class:
                 nb_accurate_results += 1
-            else:
-                print("Found an incorrect result:", document)
         return nb_accurate_results / data_set.shape[0]

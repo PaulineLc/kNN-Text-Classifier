@@ -16,4 +16,5 @@ training_set, test_set = TextData.split_dataset(0.7)
 TextClassifier.training_set = training_set
 TextClassifier.test_set = test_set
 
-print(TextClassifier.get_accuracy(TextClassifier.test_set))
+print("Unweighted kNN accuracy:", TextClassifier.get_accuracy(TextClassifier.test_set, weighted=False))
+print("Weighted kNN accuracy:", TextClassifier.get_accuracy(TextClassifier.test_set, weighted=True))
