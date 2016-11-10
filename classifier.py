@@ -2,18 +2,17 @@ import math
 import operator
 
 from Assignment.text_data import Document
-from Assignment.dataset import TextData
 
 
 class TextClassifier:
 
     training_set = None
+    all_bags_of_words = {} # created to store the bags of words and avoid calculating the same one twice.
 
     def __init__(self, document):
         self.document = document
         self.similarity = {}
-        self.weigth_per_classes = {'business': 0, 'politics': 0, 'sport': 0, 'technology': 0}
-        self.all_bags_of_words = {} # created to store the bags of words and avoid calculating the same one twice.
+        self.weight_per_classes = {'business': 0, 'politics': 0, 'sport': 0, 'technology': 0}
 
     @classmethod
     def define_training_set(cls, dataset):
@@ -39,14 +38,13 @@ class TextClassifier:
         for doc_id in TextClassifier.training_set:
             if doc_id == self.document.doc_id:
                 continue  # ignore entry if it is the same document...
-            try:
-                self.all_bags_of_words[doc_id]
-            except:
-                pass
             curr_doc = Document(doc_id)
-            curr_doc.create_bag_of_words()
+            try:
+                TextClassifier.all_bags_of_words[doc_id]
+            except KeyError:
+                TextClassifier.all_bags_of_words[doc_id] = curr_doc.create_bag_of_words()
             curr_cos = self.calculate_cosine(curr_doc)
-            self.similarity[int(doc_id)] = curr_cos  # TODO: try remove the cast to integer - is it useful?
+            self.similarity[doc_id] = curr_cos
         return self.similarity
 
     def classify_no_weight(self, k):
@@ -57,9 +55,9 @@ class TextClassifier:
         for i in range(k):
             curr_doc_id = sorted_similarities[i][0]
             curr_doc_cat = Document(curr_doc_id).get_category()
-            self.weigth_per_classes[curr_doc_cat] += 1
-        highest = max(self.weigth_per_classes.values())  # get max value
-        potential_classes = [k for k,v in self.weigth_per_classes.items() if v == highest]  # get all entries with max value
+            self.weight_per_classes[curr_doc_cat] += 1
+        highest = max(self.weight_per_classes.values())  # get max value
+        potential_classes = [k for k,v in self.weight_per_classes.items() if v == highest]  # get all entries with max value
         if len(potential_classes) > 1:
             k -= 1  # classify text using 1 less neighbours until there are either no equality
             return self.classify_no_weight(k)
@@ -70,9 +68,9 @@ class TextClassifier:
         for i in range(k):
             curr_doc_id = sorted_similarities[i][0]
             curr_doc_cat = Document(curr_doc_id).get_category()
-            self.weigth_per_classes[curr_doc_cat] += 1 / sorted_similarities[i][1]
-        highest = max(self.weigth_per_classes.values())
-        potential_classes = [k for k, v in self.weigth_per_classes.items() if v == highest]
+            self.weight_per_classes[curr_doc_cat] += sorted_similarities[i][1] / (i + 1)  # avoid division by 0 for i=0
+        highest = max(self.weight_per_classes.values())
+        potential_classes = [k for k, v in self.weight_per_classes.items() if v == highest]
         if len(potential_classes) > 1:
             k -= 1  # classify text using 1 less neighbours until there are either no equality
             return self.classify_weighted(k)

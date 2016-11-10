@@ -10,11 +10,12 @@ from Assignment.classifier import TextClassifier
 
 TextData.define_article_data(data_file='data/news_articles.mtx')
 TextData.define_article_labels('data/news_articles.labels')
-my_document = Document(1)
+my_document = Document(888)
 
 TextClassifier.training_set = TextData.article_labels['doc_id']
 
 clf = TextClassifier(my_document)
 clf.create_similarity_dic()
 print(clf.classify(weighted=True))
-print(clf.weigth_per_classes)
+print(clf.weight_per_classes)
+print(clf.similarity)
