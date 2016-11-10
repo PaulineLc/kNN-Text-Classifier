@@ -17,5 +17,5 @@ TextClassifier.training_set = TextData.article_labels['doc_id']
 clf = TextClassifier(my_document)
 clf.create_similarity_dic()
 print(clf.classify(weighted=True))
-print(clf.weight_per_classes)
-print(clf.similarity)
+
+# clf.train_data()

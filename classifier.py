@@ -7,6 +7,7 @@ from Assignment.text_data import Document
 class TextClassifier:
 
     training_set = None
+    test_set = None
     all_bags_of_words = {} # created to store the bags of words and avoid calculating the same one twice.
 
     def __init__(self, document):
@@ -38,12 +39,12 @@ class TextClassifier:
         for doc_id in TextClassifier.training_set:
             if doc_id == self.document.doc_id:
                 continue  # ignore entry if it is the same document...
-            curr_doc = Document(doc_id)
             try:
                 TextClassifier.all_bags_of_words[doc_id]
             except KeyError:
+                curr_doc = Document(doc_id)
                 TextClassifier.all_bags_of_words[doc_id] = curr_doc.create_bag_of_words()
-            curr_cos = self.calculate_cosine(curr_doc)
+            curr_cos = self.calculate_cosine(doc_id)
             self.similarity[doc_id] = curr_cos
         return self.similarity
 
@@ -76,15 +77,18 @@ class TextClassifier:
             return self.classify_weighted(k)
         return potential_classes[0]
 
-    def calculate_cosine(self, other_doc):
+    def calculate_cosine(self, other_doc_id):
         numerator = 0
         for term in self.document.bag_of_words:
             try:
-                other_occur = other_doc.bag_of_words[term]
+                other_occur = TextClassifier.all_bags_of_words[other_doc_id][term]
             except KeyError:
                 continue # skip if term not in other document
             numerator += self.document.bag_of_words[term] * other_occur
-        denominator_1 = math.sqrt(sum(map(lambda x:x**2, other_doc.bag_of_words.values())))
+        denominator_1 = math.sqrt(sum(map(lambda x:x**2, TextClassifier.all_bags_of_words[other_doc_id].values())))
         denominator_2 = math.sqrt(sum(map(lambda x:x**2, self.document.bag_of_words.values())))
 
         return float(numerator / (denominator_1 * denominator_2))
+
+    def get_accuracy(self, data_set):
+        pass
