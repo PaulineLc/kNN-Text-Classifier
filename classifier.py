@@ -12,7 +12,8 @@ class TextClassifier:
     def __init__(self, document):
         self.document = document
         self.similarity = {}
-        self.count_classes = {'business': 0, 'politics': 0, 'sport': 0, 'technology': 0}
+        self.weigth_per_classes = {'business': 0, 'politics': 0, 'sport': 0, 'technology': 0}
+        self.all_bags_of_words = {} # created to store the bags of words and avoid calculating the same one twice.
 
     @classmethod
     def define_training_set(cls, dataset):
@@ -27,10 +28,9 @@ class TextClassifier:
             print("Please enter an integer >= 1")
         if k < 1:
             print("k must be >1")
-            self.classify()
+            self.classify() # try avoiding to recurse here
         if weighted:
-            # Todo: add weighted method
-            pass
+            return self.classify_weighted(k)
         else:
             return self.classify_no_weight(k)
 
@@ -39,10 +39,14 @@ class TextClassifier:
         for doc_id in TextClassifier.training_set:
             if doc_id == self.document.doc_id:
                 continue  # ignore entry if it is the same document...
+            try:
+                self.all_bags_of_words[doc_id]
+            except:
+                pass
             curr_doc = Document(doc_id)
             curr_doc.create_bag_of_words()
             curr_cos = self.calculate_cosine(curr_doc)
-            self.similarity[int(doc_id)] = curr_cos # TODO: try remove the cast to integer - is it useful?
+            self.similarity[int(doc_id)] = curr_cos  # TODO: try remove the cast to integer - is it useful?
         return self.similarity
 
     def classify_no_weight(self, k):
@@ -53,12 +57,25 @@ class TextClassifier:
         for i in range(k):
             curr_doc_id = sorted_similarities[i][0]
             curr_doc_cat = Document(curr_doc_id).get_category()
-            self.count_classes[curr_doc_cat] += 1
-        highest = max(self.count_classes.values()) # get max value
-        potential_classes = [k for k,v in self.count_classes.items() if v == highest]  # get all entries with max value
+            self.weigth_per_classes[curr_doc_cat] += 1
+        highest = max(self.weigth_per_classes.values())  # get max value
+        potential_classes = [k for k,v in self.weigth_per_classes.items() if v == highest]  # get all entries with max value
         if len(potential_classes) > 1:
             k -= 1  # classify text using 1 less neighbours until there are either no equality
-            return self.classify(k)
+            return self.classify_no_weight(k)
+        return potential_classes[0]
+
+    def classify_weighted(self, k):
+        sorted_similarities = sorted(self.similarity.items(), key=operator.itemgetter(1), reverse=True)
+        for i in range(k):
+            curr_doc_id = sorted_similarities[i][0]
+            curr_doc_cat = Document(curr_doc_id).get_category()
+            self.weigth_per_classes[curr_doc_cat] += 1 / sorted_similarities[i][1]
+        highest = max(self.weigth_per_classes.values())
+        potential_classes = [k for k, v in self.weigth_per_classes.items() if v == highest]
+        if len(potential_classes) > 1:
+            k -= 1  # classify text using 1 less neighbours until there are either no equality
+            return self.classify_weighted(k)
         return potential_classes[0]
 
     def calculate_cosine(self, other_doc):

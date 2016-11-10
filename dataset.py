@@ -17,7 +17,3 @@ class TextData:
     def define_article_labels(cls, label_file):
         TextData.article_labels = pd.read_csv(label_file,
                                             names=['doc_id', 'class'])
-
-    @classmethod
-    def some_test(cls):
-        TextData.test += 1
