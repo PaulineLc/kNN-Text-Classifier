@@ -93,8 +93,15 @@ class TextClassifier:
 
     @staticmethod
     def get_accuracy(data_set):
+        nb_accurate_results = 0
         for document in data_set:
             clf = TextClassifier(Document(document))
             clf.create_similarity_dic()
             k = random.randint(1,10)
-            clf.classify_no_weight(k)
+            predicted_class = clf.classify_no_weight(k)
+            actual_class = Document(document).get_category()
+            if predicted_class == actual_class:
+                nb_accurate_results += 1
+            else:
+                print("Found an incorrect result:", document)
+        return nb_accurate_results / data_set.shape[0]

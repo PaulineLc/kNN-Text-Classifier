@@ -20,9 +20,10 @@ class TextData:
 
     @classmethod
     def split_dataset(cls, training_percent):
-        training_set = TextData.article_labels.iloc[np.random.permutation(len(TextData.article_labels))]
-        training_set.reset_index(drop=True)
+        training_set = TextData.article_labels['doc_id'].iloc[np.random.permutation(len(TextData.article_labels))]
         n = int(training_set.shape[0] * training_percent)
         testing_set = training_set[n:]
         training_set = training_set[:n]
+        training_set = training_set.reset_index(drop=True)
+        testing_set = testing_set.reset_index(drop=True)
         return training_set, testing_set

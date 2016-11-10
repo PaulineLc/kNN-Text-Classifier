@@ -16,6 +16,4 @@ training_set, test_set = TextData.split_dataset(0.7)
 TextClassifier.training_set = training_set
 TextClassifier.test_set = test_set
 
-# print(TextClassifier.training_set)
-print(TextClassifier.test_set)
-# clf.train_data()
+print(TextClassifier.get_accuracy(TextClassifier.test_set))
