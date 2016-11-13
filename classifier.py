@@ -39,9 +39,7 @@ class TextClassifier:
         for doc_id in TextClassifier.training_set:
             if doc_id == self.document.doc_id:
                 continue  # ignore entry if it is the same document...
-            try:
-                TextClassifier.all_bags_of_words[doc_id]
-            except KeyError:
+            if doc_id not in TextClassifier.all_bags_of_words:
                 curr_doc = Document(doc_id)
                 TextClassifier.all_bags_of_words[doc_id] = curr_doc.create_bag_of_words()
             curr_cos = self.calculate_cosine(doc_id)
@@ -49,7 +47,6 @@ class TextClassifier:
         return self.similarity
 
     def classify_no_weight(self, k):
-        print('classify_no_weight(k)')
         # takes the k nearest neighbours
         # sort dictionary of articles by their cosine
         # TODO: improve this - when you call a recursion with k-1 you don't need to execute it all again.
@@ -64,7 +61,6 @@ class TextClassifier:
         if len(potential_classes) > 1:
             k -= 1  # classify text using 1 less neighbours until there are either no equality
             return self.classify_no_weight(k)
-        print('end classify_np_weigth(k)')
         return potential_classes[0]
 
     def classify_weighted(self, k):
@@ -84,11 +80,9 @@ class TextClassifier:
     def calculate_cosine(self, other_doc_id):
         numerator = 0
         for term in self.document.bag_of_words:
-            try:
+            if term in TextClassifier.all_bags_of_words[other_doc_id]:
                 other_occur = TextClassifier.all_bags_of_words[other_doc_id][term]
-            except KeyError:
-                continue  # skip if term not in other document
-            numerator += self.document.bag_of_words[term] * other_occur
+                numerator += self.document.bag_of_words[term] * other_occur
         denominator_1 = math.sqrt(sum(map(lambda x: x**2, TextClassifier.all_bags_of_words[other_doc_id].values())))
         denominator_2 = math.sqrt(sum(map(lambda x: x**2, self.document.bag_of_words.values())))
 
@@ -99,15 +93,14 @@ class TextClassifier:
         nb_accurate_results = 0
         i = 1
         for document in data_set:
-            print('calculating accuracy of document', i)
             i += 1
             clf = TextClassifier(Document(document))
             clf.create_similarity_dic()
             k = random.randint(1,10)
             if weighted:
-                predicted_class = clf.classify_weight(k)
+                predicted_class = clf.classify_weighted(k)
             else:
-                predicted_class = clf.classify_no_weighted(k)
+                predicted_class = clf.classify_no_weight(k)
             actual_class = Document(document).get_category()
             if predicted_class == actual_class:
                 nb_accurate_results += 1
