@@ -11,7 +11,7 @@ class TextData:
         TextData.article_data = pd.read_csv(data_file,
                                                  sep=" ",
                                                  skiprows=2,
-                                                 names=['doc_id', 'term_id', 'nb_occurences'])
+                                                 names=['doc_id', 'term_id', 'nb_occurrences'])
 
     @classmethod
     def define_article_labels(cls, label_file):
