@@ -14,7 +14,6 @@ class TextClassifier:
     def __init__(self, document):
         self.document = document
         self.similarity = {}
-        self.weight_per_classes = {'business': 0, 'politics': 0, 'sport': 0, 'technology': 0}
 
     @classmethod
     def define_training_set(cls, dataset):
@@ -36,6 +35,7 @@ class TextClassifier:
             return self.classify_no_weight(k)
 
     def create_similarity_dic(self):
+        print('create_similarity_dic()')
         self.document.create_bag_of_words()
         for doc_id in TextClassifier.training_set:
             if doc_id == self.document.doc_id:
@@ -50,35 +50,39 @@ class TextClassifier:
         return self.similarity
 
     def classify_no_weight(self, k):
+        print('classify_no_weight(k)')
         # takes the k nearest neighbours
         # sort dictionary of articles by their cosine
         # TODO: improve this - when you call a recursion with k-1 you don't need to execute it all again.
+        count_per_classes = {'business': 0, 'politics': 0, 'sport': 0, 'technology': 0}
         sorted_similarities = sorted(self.similarity.items(), key=operator.itemgetter(1), reverse=True)
         for i in range(k):
             curr_doc_id = sorted_similarities[i][0]
             curr_doc_cat = Document(curr_doc_id).get_category()
-            self.weight_per_classes[curr_doc_cat] += 1
-        highest = max(self.weight_per_classes.values())  # get max value
-        potential_classes = [k for k,v in self.weight_per_classes.items() if v == highest]  # get all entries with max value
+            count_per_classes[curr_doc_cat] += 1
+        highest = max(count_per_classes.values())  # get max value
+        potential_classes = [k for k,v in count_per_classes.items() if v == highest]  # get all entries with max value
         if len(potential_classes) > 1:
             k -= 1  # classify text using 1 less neighbours until there are either no equality
             return self.classify_no_weight(k)
         return potential_classes[0]
 
     def classify_weighted(self, k):
+        weight_per_classes = {'business': 0, 'politics': 0, 'sport': 0, 'technology': 0}
         sorted_similarities = sorted(self.similarity.items(), key=operator.itemgetter(1), reverse=True)
         for i in range(k):
             curr_doc_id = sorted_similarities[i][0]
             curr_doc_cat = Document(curr_doc_id).get_category()
-            self.weight_per_classes[curr_doc_cat] += sorted_similarities[i][1] / (i + 1)  # avoid division by 0 for i=0
-        highest = max(self.weight_per_classes.values())
-        potential_classes = [k for k, v in self.weight_per_classes.items() if v == highest]
+            weight_per_classes[curr_doc_cat] += sorted_similarities[i][1] / (i + 1)  # avoid division by 0 for i=0
+        highest = max(weight_per_classes.values())
+        potential_classes = [k for k, v in weight_per_classes.items() if v == highest]
         if len(potential_classes) > 1:
             k -= 1  # classify text using 1 less neighbours until there are either no equality
-            return self.classify_weighted(k)
+            return self.classify_weighted(k)  # it will eventually return because at k = 1 there can be no conflict
         return potential_classes[0]
 
     def calculate_cosine(self, other_doc_id):
+        print('calculate_cosine(other_doc_id)')
         numerator = 0
         for term in self.document.bag_of_words:
             try:
