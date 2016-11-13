@@ -69,7 +69,7 @@ class TextClassifier:
         for i in range(k):
             curr_doc_id = sorted_similarities[i][0]
             curr_doc_cat = Document(curr_doc_id).get_category()
-            weight_per_classes[curr_doc_cat] += sorted_similarities[i][1] / (i + 1)  # avoid division by 0 for i=0
+            weight_per_classes[curr_doc_cat] += sorted_similarities[i][1] * (k-i)  # more votes to higher ranked results
         highest = max(weight_per_classes.values())
         potential_classes = [k for k, v in weight_per_classes.items() if v == highest]
         if len(potential_classes) > 1:
@@ -89,19 +89,20 @@ class TextClassifier:
         return float(numerator / (denominator_1 * denominator_2))
 
     @staticmethod
-    def get_accuracy(data_set, weighted=False):
-        nb_accurate_results = 0
+    def get_accuracy(data_set):
+        nb_accurate_results_unweighted = 0
+        nb_accurate_results_weighted = 0
         i = 1
         for document in data_set:
             i += 1
             clf = TextClassifier(Document(document))
             clf.create_similarity_dic()
             k = random.randint(1,10)
-            if weighted:
-                predicted_class = clf.classify_weighted(k)
-            else:
-                predicted_class = clf.classify_no_weight(k)
+            predicted_class_unweighted = clf.classify_no_weight(k)
+            predicted_class_weighted = clf.classify_weighted(k)
             actual_class = Document(document).get_category()
-            if predicted_class == actual_class:
-                nb_accurate_results += 1
-        return nb_accurate_results / data_set.shape[0]
+            if predicted_class_unweighted == actual_class:
+                nb_accurate_results_unweighted += 1
+            if predicted_class_weighted == actual_class:
+                nb_accurate_results_weighted += 1
+        return nb_accurate_results_unweighted / data_set.shape[0], nb_accurate_results_weighted / data_set.shape[0]
