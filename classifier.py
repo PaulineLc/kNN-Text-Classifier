@@ -35,7 +35,6 @@ class TextClassifier:
             return self.classify_no_weight(k)
 
     def create_similarity_dic(self):
-        print('create_similarity_dic()')
         self.document.create_bag_of_words()
         for doc_id in TextClassifier.training_set:
             if doc_id == self.document.doc_id:
@@ -61,10 +60,11 @@ class TextClassifier:
             curr_doc_cat = Document(curr_doc_id).get_category()
             count_per_classes[curr_doc_cat] += 1
         highest = max(count_per_classes.values())  # get max value
-        potential_classes = [k for k,v in count_per_classes.items() if v == highest]  # get all entries with max value
+        potential_classes = [k for k, v in count_per_classes.items() if v == highest]  # get all entries with max value
         if len(potential_classes) > 1:
             k -= 1  # classify text using 1 less neighbours until there are either no equality
             return self.classify_no_weight(k)
+        print('end classify_np_weigth(k)')
         return potential_classes[0]
 
     def classify_weighted(self, k):
@@ -82,7 +82,6 @@ class TextClassifier:
         return potential_classes[0]
 
     def calculate_cosine(self, other_doc_id):
-        print('calculate_cosine(other_doc_id)')
         numerator = 0
         for term in self.document.bag_of_words:
             try:
@@ -90,22 +89,25 @@ class TextClassifier:
             except KeyError:
                 continue  # skip if term not in other document
             numerator += self.document.bag_of_words[term] * other_occur
-        denominator_1 = math.sqrt(sum(map(lambda x:x**2, TextClassifier.all_bags_of_words[other_doc_id].values())))
-        denominator_2 = math.sqrt(sum(map(lambda x:x**2, self.document.bag_of_words.values())))
+        denominator_1 = math.sqrt(sum(map(lambda x: x**2, TextClassifier.all_bags_of_words[other_doc_id].values())))
+        denominator_2 = math.sqrt(sum(map(lambda x: x**2, self.document.bag_of_words.values())))
 
         return float(numerator / (denominator_1 * denominator_2))
 
     @staticmethod
     def get_accuracy(data_set, weighted=False):
         nb_accurate_results = 0
+        i = 1
         for document in data_set:
+            print('calculating accuracy of document', i)
+            i += 1
             clf = TextClassifier(Document(document))
             clf.create_similarity_dic()
             k = random.randint(1,10)
             if weighted:
-                predicted_class = clf.classify_no_weight(k)
+                predicted_class = clf.classify_weight(k)
             else:
-                predicted_class = clf.classify_weighted(k)
+                predicted_class = clf.classify_no_weighted(k)
             actual_class = Document(document).get_category()
             if predicted_class == actual_class:
                 nb_accurate_results += 1
