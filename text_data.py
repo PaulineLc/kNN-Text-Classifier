@@ -1,7 +1,7 @@
-from Assignment.dataset import TextData
+from Assignment.dataset import Dataset
 
 
-class Document(TextData):
+class Document(Dataset):
 
     def __init__(self, doc_id):
         self.doc_id = doc_id
@@ -11,16 +11,16 @@ class Document(TextData):
     def create_bag_of_words(self):
         '''returns a dictionary of all (term_id, occurrences)
         of the terms present in the document'''
-        df = TextData.article_data.loc[TextData.article_data['doc_id'] == self.doc_id].reset_index()
+        df = Dataset.article_data.loc[Dataset.article_data['doc_id'] == self.doc_id].reset_index()
         for i in range(df.shape[0]):
             self.bag_of_words[df['term_id'][i]] = df['nb_occurrences'][i]
         return self.bag_of_words
 
     def get_category(self):
-        if TextData.article_labels is None:
+        if Dataset.article_labels is None:
             print("You need to define your dataset first")
             return ""
-        doc_index = TextData.article_labels['class'].loc[TextData.article_labels['doc_id'] == self.doc_id].index[0]
-        label = TextData.article_labels['class'][doc_index]
+        doc_index = Dataset.article_labels['class'].loc[Dataset.article_labels['doc_id'] == self.doc_id].index[0]
+        label = Dataset.article_labels['class'][doc_index]
         self.label = label
         return label
