@@ -121,7 +121,7 @@ class TextClassifier:
         The training set and the testing set must be set prior to calling this method.
 
         Returns:
-            a list containing the unweighted kNN accuracy at position 0, and the weighted kNN accuracy at position 1
+            a list containing the unweighted kNN accuracy at index 0, and the weighted kNN accuracy at index 1
         """
         nb_accurate_results_unweighted = 0
         nb_accurate_results_weighted = 0

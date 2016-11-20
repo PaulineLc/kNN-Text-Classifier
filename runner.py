@@ -1,9 +1,3 @@
-# Todo: better design for classes
-# Todo: puts the methods where they belong e.g. get_category in the document
-# Todo: Maybe have Document inherit from TextData
-# Todo: Find ways to make the dataset available from more places
-# Todo: improve running time of create_similarities
-
 from Assignment.dataset import Dataset
 from Assignment.classifier import TextClassifier
 
