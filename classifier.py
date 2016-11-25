@@ -34,7 +34,7 @@ class TextClassifier:
         self.similarity = {}
         self.sorted_similarities = None
 
-    def create_similarity_dic(self) -> dict:
+    def update_similarity_dic(self, missing_values) -> dict:
         """Create the similarity dictionary for a target document by calculating its similarity to documents from
         the training set.
 
@@ -49,10 +49,11 @@ class TextClassifier:
         Returns:
             The dictionary listing the documents from the training set and their similarity to the target document.
         """
-        self.document.create_bag_of_words()
-        for doc_id in TextClassifier.training_set:
+        if not self.document.bag_of_words:
+            self.document.create_bag_of_words()
+        for doc_id in missing_values:
             if doc_id == self.document.doc_id:
-                continue  # ignore entry if it is the same document
+                continue  # ignore doc_id if it is the same document; useful in case when the uses the entire dataset
             if doc_id not in TextClassifier.all_bags_of_words:
                 curr_doc = Document(doc_id)
                 TextClassifier.all_bags_of_words[doc_id] = curr_doc.create_bag_of_words()
@@ -94,9 +95,11 @@ class TextClassifier:
         Returns:
             The predicted class of the target document.
         """
-        if not self.similarity:
-            self.create_similarity_dic()
+        values_missing_from_similarities = set(TextClassifier.training_set) - self.similarity.keys()
+        if values_missing_from_similarities:  # check if the current training set has new values and insert them
+            self.update_similarity_dic(values_missing_from_similarities)
             self.sorted_similarities = sorted(self.similarity.items(), key=operator.itemgetter(1), reverse=True)
+
         while True:
             votes_per_classes = {'business': 0, 'politics': 0, 'sport': 0, 'technology': 0}
             for i in range(nb_neighbors):
@@ -136,7 +139,15 @@ class TextClassifier:
             a list containing the unweighted kNN accuracy at index 0, and the weighted kNN accuracy at index 1
         """
 
-        def get_subset_accuracy():
+        def get_subset_accuracy() -> List[int]:
+            """ Inner class evaluate the classifier on a training and testing set.
+
+            Takes no argument as it will use the training and testing set defined at a class level.
+
+            Returns:
+                a list containing the percentage of correctly classified examples using an unweighted kNN at index 0,
+                and the percentage of correctly classified examples using a weighted kNN at index 1.
+            """
             acc_results_unweighted = 0
             acc_results_weighted = 0
             for doc_id in cls.test_set:
@@ -151,20 +162,25 @@ class TextClassifier:
                     acc_results_weighted += 1
             return acc_results_unweighted, acc_results_weighted
 
-        if method == 0:
-            if split == 0:
-                training_set_percentage = 0.7
-            else:
-                training_set_percentage = split
+        def calculate_with_training_set():
+            """Inner class. Calculates the accuracy of the classifier using a training set
+
+            Returns:
+                a list containing the number of correctly classified examples using an unweighted kNN at index 0,
+                and the number of correctly classified examples using a weighted kNN at index 1.
+            """
             cls.training_set, cls.test_set = Dataset.split_training_testing_set(training_set_percentage)
             test_set_size = cls.test_set.shape[0]
             nb_accurate_results_unweighted, nb_accurate_results_weighted = get_subset_accuracy()
             return nb_accurate_results_unweighted / test_set_size, nb_accurate_results_weighted / test_set_size
-        elif method == 1:
-            if split == 0:
-                k = 10
-            else:
-                k = split
+
+        def calculate_with_k_fold_cross_validation():
+            """Inner class. Calculates the accuracy of the classifier using k-fold cross validation.
+
+            Returns:
+                a list containing the number of correctly classified examples using an unweighted kNN at index 0,
+                and the number of correctly classified examples using a weighted kNN at index 1.
+            """
             k_folds = Dataset.split_in_k_folds(k)
             test_set_size = k_folds[0].shape[0]
             accuracy_unweighted, accuracy_weighted = 0, 0
@@ -175,5 +191,24 @@ class TextClassifier:
                 accuracy_unweighted += nb_accurate_results_unweighted / test_set_size
                 accuracy_weighted += nb_accurate_results_weighted / test_set_size
             return accuracy_unweighted / k, accuracy_weighted / k
+
+        if method == 0:
+            if split == 0:
+                training_set_percentage = 0.7
+            else:
+                if not isinstance(split, float):
+                    raise Exception("Invalid split input: \"{}\". Split should be a float.".format(split))
+                training_set_percentage = split
+            return calculate_with_training_set()
+
+        elif method == 1:
+            if split == 0:
+                k = 10
+            else:
+                if not isinstance(split, int):
+                    raise Exception("Invalid split input: \"{}\". Split should be an integer.".format(split))
+                k = split
+            return calculate_with_k_fold_cross_validation()
+
         else:
-            raise Exception("Invalid method input")
+            raise Exception("Invalid method input: \"{}\". The method input should be 0 or 1.".format(method))
