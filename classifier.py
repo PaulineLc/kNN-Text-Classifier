@@ -5,11 +5,12 @@ from typing import List
 from Assignment.text_data import Document
 from Assignment.dataset import Dataset
 
+
 class TextClassifier:
     """The role of this class is to classify a target document.
 
     Args:
-        document (int): an integer representing the document ID of the target document.
+        doc_id (int): an integer representing the document ID of the target document.
 
     Attributes:
         document (Document): the target document.
@@ -152,10 +153,10 @@ class TextClassifier:
 
         if method == 0:
             if split == 0:
-                training_set_perc = 0.7
+                training_set_percentage = 0.7
             else:
-                training_set_perc = split
-            cls.training_set, cls.test_set = Dataset.split_training_testing_set(training_set_perc)
+                training_set_percentage = split
+            cls.training_set, cls.test_set = Dataset.split_training_testing_set(training_set_percentage)
             test_set_size = cls.test_set.shape[0]
             nb_accurate_results_unweighted, nb_accurate_results_weighted = get_subset_accuracy()
             return nb_accurate_results_unweighted / test_set_size, nb_accurate_results_weighted / test_set_size
