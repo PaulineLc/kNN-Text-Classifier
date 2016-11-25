@@ -162,7 +162,7 @@ class TextClassifier:
                     acc_results_weighted += 1
             return acc_results_unweighted, acc_results_weighted
 
-        def calculate_with_training_set():
+        def calculate_with_training_set() -> List[float]:
             """Inner class. Calculates the accuracy of the classifier using a training set
 
             Returns:
@@ -174,7 +174,7 @@ class TextClassifier:
             nb_accurate_results_unweighted, nb_accurate_results_weighted = get_subset_accuracy()
             return nb_accurate_results_unweighted / test_set_size, nb_accurate_results_weighted / test_set_size
 
-        def calculate_with_k_fold_cross_validation():
+        def calculate_with_k_fold_cross_validation() -> List[float]:
             """Inner class. Calculates the accuracy of the classifier using k-fold cross validation.
 
             Returns:
