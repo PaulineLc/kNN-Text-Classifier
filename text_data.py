@@ -1,7 +1,7 @@
 from Assignment.dataset import Dataset
 
 
-class Document(Dataset):
+class Document:
     """This class stores document elements (document id, bag of words, label).
 
     Args:
