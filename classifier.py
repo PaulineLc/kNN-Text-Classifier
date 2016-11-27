@@ -1,9 +1,8 @@
-import math
 import operator
 import random
 from typing import List
-from Assignment.text_data import Document
-from Assignment.dataset import Dataset
+from text_data import Document
+from dataset import Dataset
 
 
 class TextClassifier:
@@ -20,21 +19,27 @@ class TextClassifier:
         training_set (pandas.DataFrame):    the training set which will be used for calculation of the similarities to
                                             the target document
         test_set (pandas.DataFrame): the test set which will be used to calculate the accuracy of the classifier
-        all_bags_of_words (dict):   a dictionary which will store the bag of words of documents from the training set.
+        all_bags_of_words (dict[int, Document]):   a dictionary which will store the bag of words of documents from the training set.
                                     It saves computation at run time by only calculating each bag of words once (as
                                     opposed to calculating a bag of words for every class instance).
+        all_similarities (dict[int, dict]):    a dictionary of all previously computer cosine similarities so as to avoid computing
+                                    the same value twice (e.g. between document 1 and document 5 then between document 5
+                                    and document 1). The format of this dictionary is as follow:
+                                    {(doc_id1, doc_id2: cosine_similarity} where doc_id1 is the lowest of both doc_id,
+                                    and doc_id2 is the highest.
     """
 
     training_set = None
     test_set = None
-    all_bags_of_words = {}  # created to store the bags of words and avoid calculating the same one twice.
+    all_documents = {}  # created to store the bags of words and avoid calculating the same one twice.
+    all_similarities = {}
 
     def __init__(self, doc_id: int):
         self.document = Document(doc_id)
         self.similarity = {}
         self.sorted_similarities = None
 
-    def update_similarity_dic(self, missing_values) -> dict:
+    def update_similarity_dic(self, missing_doc_id) -> dict:
         """Create the similarity dictionary for a target document by calculating its similarity to documents from
         the training set.
 
@@ -49,35 +54,20 @@ class TextClassifier:
         Returns:
             The dictionary listing the documents from the training set and their similarity to the target document.
         """
-        if not self.document.bag_of_words:
-            self.document.create_bag_of_words()
-        for doc_id in missing_values:
+
+        for doc_id in missing_doc_id:
             if doc_id == self.document.doc_id:
-                continue  # ignore doc_id if it is the same document; useful in case when the uses the entire dataset
-            if doc_id not in TextClassifier.all_bags_of_words:
-                curr_doc = Document(doc_id)
-                TextClassifier.all_bags_of_words[doc_id] = curr_doc.create_bag_of_words()
-            curr_cos = self.calculate_cosine(doc_id)
-            self.similarity[doc_id] = curr_cos
+                continue  # ignore doc_id if it is the same document; useful in case training set = entire dataset
+            if doc_id not in TextClassifier.all_documents:
+                TextClassifier.all_documents[doc_id] = Document(doc_id)
+            doc_id_pair = (min(self.document.doc_id, doc_id),  max(self.document.doc_id, doc_id))
+            if doc_id_pair in TextClassifier.all_similarities:
+                self.similarity[doc_id] = TextClassifier.all_similarities[doc_id_pair]
+            else:
+                curr_cos = self.document.cosine_similarity(TextClassifier.all_documents[doc_id])
+                TextClassifier.all_similarities[doc_id_pair] = curr_cos
+                self.similarity[doc_id] = curr_cos
         return self.similarity
-
-    def calculate_cosine(self, other_doc_id: int) -> float:
-        """Calculate and returns the cosine similarity between two documents.
-
-        Args:
-            other_doc_id: the id of a document from the training set.
-
-        Returns:
-            The cosine similarity between the target document and the document from the training set.
-        """
-        numerator = 0
-        for term in self.document.bag_of_words:
-            if term in TextClassifier.all_bags_of_words[other_doc_id]:
-                other_occur = TextClassifier.all_bags_of_words[other_doc_id][term]
-                numerator += self.document.bag_of_words[term] * other_occur
-        denominator_1 = math.sqrt(sum(map(lambda x: x ** 2, TextClassifier.all_bags_of_words[other_doc_id].values())))
-        denominator_2 = math.sqrt(sum(map(lambda x: x ** 2, self.document.bag_of_words.values())))
-        return numerator / (denominator_1 * denominator_2)
 
     def classify(self, nb_neighbors: int, weighted: bool=False) -> str:
         """Calculates and returns the predicted class for a target document.
@@ -104,7 +94,7 @@ class TextClassifier:
             votes_per_classes = {'business': 0, 'politics': 0, 'sport': 0, 'technology': 0}
             for i in range(nb_neighbors):
                 curr_doc_id = self.sorted_similarities[i][0]
-                curr_doc_cat = Document(curr_doc_id).get_category()
+                curr_doc_cat = TextClassifier.all_documents[curr_doc_id].label
                 if weighted:
                     # weight votes according to cosine similarities
                     votes_per_classes[curr_doc_cat] += self.sorted_similarities[i][1]
@@ -155,7 +145,7 @@ class TextClassifier:
                 nb_neighbors = random.randint(1, 10)
                 predicted_class_unweighted = clf.classify(nb_neighbors, weighted=False)
                 predicted_class_weighted = clf.classify(nb_neighbors, weighted=True)
-                actual_class = clf.document.get_category()
+                actual_class = clf.document.label
                 if predicted_class_unweighted == actual_class:
                     acc_results_unweighted += 1
                 if predicted_class_weighted == actual_class:

@@ -1,5 +1,6 @@
-from Assignment.dataset import Dataset
-from Assignment.classifier import TextClassifier
+from dataset import Dataset
+from classifier import TextClassifier
+
 
 Dataset.define_article_data(data_file='data/news_articles.mtx')
 Dataset.define_article_labels('data/news_articles.labels')
