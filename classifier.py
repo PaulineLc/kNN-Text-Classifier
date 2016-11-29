@@ -16,17 +16,19 @@ class TextClassifier:
         similarity (dict): a dictionary of similarities of the target document to documents from the training set
 
     Class attributes:
-        training_set (pandas.DataFrame):    the training set which will be used for calculation of the similarities to
-                                            the target document
-        test_set (pandas.DataFrame): the test set which will be used to calculate the accuracy of the classifier
-        all_bags_of_words (dict[int, Document]):   a dictionary which will store the bag of words of documents from the training set.
-                                    It saves computation at run time by only calculating each bag of words once (as
-                                    opposed to calculating a bag of words for every class instance).
-        all_similarities (dict[int, dict]):    a dictionary of all previously computer cosine similarities so as to avoid computing
-                                    the same value twice (e.g. between document 1 and document 5 then between document 5
-                                    and document 1). The format of this dictionary is as follow:
-                                    {(doc_id1, doc_id2: cosine_similarity} where doc_id1 is the lowest of both doc_id,
-                                    and doc_id2 is the highest.
+        training_set (pandas.DataFrame):        the training set which will be used for calculation of the similarities
+                                                to the target document.
+        test_set (pandas.DataFrame):            the test set which will be used to calculate the accuracy of the
+                                                classifier.
+        all_documents (dict[int, Document]):    a list that contains all the documents previously created. It saves
+                                                computation at runtime by reusing documents instead of creating similar
+                                                ones.
+        all_similarities (dict[int, dict]):     a dictionary of all previously computer cosine similarities so as to
+                                                avoid computing the same value twice (e.g. between document 1 and
+                                                document 5 then between document 5 and document 1). The format of this
+                                                dictionary is as follow:
+                                                {(doc_id1, doc_id2: cosine_similarity} where doc_id1 is the lowest of
+                                                both doc_id, and doc_id2 is the highest.
     """
 
     training_set = None
@@ -35,7 +37,8 @@ class TextClassifier:
     all_similarities = {}
 
     def __init__(self, doc_id: int):
-        self.document = Document(doc_id)
+        self.document = Document(doc_id) if doc_id not in TextClassifier.all_documents \
+                                        else TextClassifier.all_documents[doc_id]
         self.similarity = {}
         self.sorted_similarities = None
 
@@ -86,21 +89,21 @@ class TextClassifier:
             The predicted class of the target document.
         """
         values_missing_from_similarities = set(TextClassifier.training_set) - self.similarity.keys()
-        if values_missing_from_similarities:  # check if the current training set has new values and insert them
+        if values_missing_from_similarities:  # checks if the current training set has new values and insert them
             self.update_similarity_dic(values_missing_from_similarities)
             self.sorted_similarities = sorted(self.similarity.items(), key=operator.itemgetter(1), reverse=True)
 
         while True:
             votes_per_classes = {'business': 0, 'politics': 0, 'sport': 0, 'technology': 0}
             for i in range(nb_neighbors):
-                curr_doc_id = self.sorted_similarities[i][0]
-                curr_doc_cat = TextClassifier.all_documents[curr_doc_id].label
+                current_doc_id = self.sorted_similarities[i][0]
+                current_doc_category = TextClassifier.all_documents[current_doc_id].label
                 if weighted:
                     # weight votes according to cosine similarities
-                    votes_per_classes[curr_doc_cat] += self.sorted_similarities[i][1]
+                    votes_per_classes[current_doc_category] += self.sorted_similarities[i][1]
                 else:
                     # all votes carry equal weight (1)
-                    votes_per_classes[curr_doc_cat] += 1
+                    votes_per_classes[current_doc_category] += 1
             count_majority_vote = max(votes_per_classes.values())  # get max value
             majority_voting_result = [doc_cat
                                       for doc_cat, cosine_similarity

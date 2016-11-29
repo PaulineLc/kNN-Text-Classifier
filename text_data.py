@@ -3,18 +3,19 @@ import math
 
 
 class Document:
-    """This class stores document elements (document id, bag of words, label).
+    """This class stores document elements.
 
     Args:
         doc_id: the ID of the document
 
-    Attributes:
+    Properties:
         doc_id: the ID of the document
-        bag_of_words: the bag of words of the document (empty until _create_bag_of_words() is explicitly called)
-        label: the label of the document (empty until _create_label() is explicitly called)
-        vector_norm: the vector norm that is used to calculate the cosine similarity. Used as cache as it is a costly
-                     computation.
-                     Formula = square_root(sum(square(term_occurrence)))
+        _bag_of_words: the bag of words of the document (None until it is called)
+        _label: the label of the document (None until it is called)
+        _vector_norm: the vector norm that is used to calculate the cosine similarity. Used as cache as it is a costly
+                      computation.
+                        Formula = square_root(sum(square(term_occurrence)))
+                        None until it is called.
     """
 
     def __init__(self, doc_id: int):
@@ -24,24 +25,45 @@ class Document:
         self._vector_norm = None
 
     @property
-    def bag_of_words(self):
+    def bag_of_words(self) -> dict(int, int):
+        """Returns the bag of words of the document.
+
+        If the bag of words has not been created, it will create it.
+
+        Returns:
+            The bag of word
+        """
         if not self._bag_of_words:
             self._bag_of_words = self._create_bag_of_words()
         return self._bag_of_words
 
     @property
-    def label(self):
+    def label(self) -> str:
+        """Returns the label of the document.
+
+        If it has not been created yet, it will create it.
+
+        Returns:
+            The label of the document.
+            """
         if not self._label:
             self._label = self._create_label()
         return self._label
 
     @property
-    def vector_norm(self):
+    def vector_norm(self) -> float:
+        """Returns the vector norm of the document.
+
+        If the vector norm has not been created yet, it will create it.
+
+        Returns:
+            The vector norm
+        """
         if not self._vector_norm:
             self._vector_norm = self._create_vector_norm()
         return self._vector_norm
 
-    def _create_bag_of_words(self) -> dict:
+    def _create_bag_of_words(self) -> dict(int, int):
         """Computes the bag of words of the document.
 
         Returns:
@@ -54,6 +76,11 @@ class Document:
         return bag_of_words
 
     def _create_vector_norm(self) -> float:
+        """Computes the vector norm of the document.
+
+        Returns:
+            The vector norm of the document.
+        """
         return math.sqrt(sum(map(lambda x: x * x, self.bag_of_words.values())))
 
     def _create_label(self) -> str:
