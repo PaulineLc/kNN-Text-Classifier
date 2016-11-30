@@ -1,4 +1,5 @@
-from dataset import Dataset
+from Assignment.dataset import Dataset
+from typing import Dict
 import math
 
 
@@ -25,7 +26,7 @@ class Document:
         self._vector_norm = None
 
     @property
-    def bag_of_words(self) -> dict(int, int):
+    def bag_of_words(self) -> Dict[int, int]:
         """Returns the bag of words of the document.
 
         If the bag of words has not been created, it will create it.
@@ -63,7 +64,7 @@ class Document:
             self._vector_norm = self._create_vector_norm()
         return self._vector_norm
 
-    def _create_bag_of_words(self) -> dict(int, int):
+    def _create_bag_of_words(self) -> Dict[int, int]:
         """Computes the bag of words of the document.
 
         Returns:

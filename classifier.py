@@ -1,8 +1,8 @@
 import operator
 import random
 from typing import List
-from text_data import Document
-from dataset import Dataset
+from Assignment.document import Document
+from Assignment.dataset import Dataset
 
 
 class TextClassifier:
