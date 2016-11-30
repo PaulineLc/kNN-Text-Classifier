@@ -80,6 +80,7 @@ class TextClassifier:
 
         Args:
             nb_neighbors:   the number of neighbours to be considered when implementing the majority voting
+                            user should make sure that nb_neighbors < number of examples in the training set.
             weighted :      if True, the target class will be predicted using a weighted majority voting.
                             The current implementation of the weighted kNN uses the cosine similarity as a way to
                             weight votes. If false, the class of the target document will be predicted using unweighted
@@ -94,16 +95,18 @@ class TextClassifier:
             self.sorted_similarities = sorted(self.similarities_dict.items(), key=operator.itemgetter(1), reverse=True)
 
         while True:
-            votes_per_classes = {'business': 0, 'politics': 0, 'sport': 0, 'technology': 0}
+            votes_per_classes = dict()
             for i in range(nb_neighbors):
                 current_doc_id = self.sorted_similarities[i][0]
-                current_doc_category = TextClassifier.all_documents[current_doc_id].label
+                current_doc_class = TextClassifier.all_documents[current_doc_id].label
+                if current_doc_class not in votes_per_classes:
+                    votes_per_classes[current_doc_class] = 0  # create class entry in the dictionary
                 if weighted:
                     # weight votes according to cosine similarities
-                    votes_per_classes[current_doc_category] += self.sorted_similarities[i][1]
+                    votes_per_classes[current_doc_class] += self.sorted_similarities[i][1]
                 else:
                     # all votes carry equal weight (1)
-                    votes_per_classes[current_doc_category] += 1
+                    votes_per_classes[current_doc_class] += 1
             count_majority_vote = max(votes_per_classes.values())  # get max value
             majority_voting_result = [doc_cat
                                       for doc_cat, cosine_similarity
