@@ -146,9 +146,10 @@ class TextClassifier:
             """
             acc_results_unweighted = 0
             acc_results_weighted = 0
+            size_training_set = len(TextClassifier.training_set)
             for doc_id in cls.test_set:
                 clf = TextClassifier(doc_id)
-                nb_neighbors = random.randint(1, 10)
+                nb_neighbors = random.randint(1, size_training_set if size_training_set < 10 else 10)
                 predicted_class_unweighted = clf.classify(nb_neighbors, weighted=False)
                 predicted_class_weighted = clf.classify(nb_neighbors, weighted=True)
                 actual_class = clf.document.label
