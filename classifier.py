@@ -129,7 +129,9 @@ class TextClassifier:
             split:  if method = 0, split represents the percentage of the dataset to be used as training set.
                     if method = 1, split represents the number of folds.
                     Default:    if method = 0, the size of the training set will be set to 70% of the dataset
-                                if method = 1, the number of folds will be set to 10
+                                if method = 1, the number of folds will be set to 10. If there are less than 10 examples
+                                in the entire dataset, k will be set to the length of the dataset (and therefore the
+                                accuracy will be calculated with a leave-one-out approach)
 
         Returns:
             a list containing the unweighted kNN accuracy at index 0, and the weighted kNN accuracy at index 1
@@ -200,7 +202,8 @@ class TextClassifier:
 
         elif method == 1:
             if split == 0:
-                k = 10
+                len_dataset = len(Dataset.article_labels['doc_id'])
+                k = 10 if len_dataset >= 10 else len_dataset
             else:
                 if not isinstance(split, int):
                     raise Exception("Invalid split input: \"{}\". Split should be an integer.".format(split))
