@@ -113,3 +113,13 @@ class Document:
         denominator_1 = other_doc.vector_norm
         denominator_2 = self.vector_norm
         return numerator / (denominator_1 * denominator_2)
+
+    def __eq__(self, other: 'Document') -> bool:
+        """Implementation of the equality comparator for the Document class.
+
+        Returns true if both Document objects have the same doc_id
+
+        Returns:
+            a boolean
+        """
+        return self.doc_id == other.doc_id

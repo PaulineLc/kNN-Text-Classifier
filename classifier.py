@@ -13,7 +13,7 @@ class TextClassifier:
 
     Attributes:
         document (Document): the target document.
-        similarity (dict): a dictionary of similarities of the target document to documents from the training set
+        similarities_dict (dict): a dictionary of similarities of the target document to documents from the training set
 
     Class attributes:
         training_set (pandas.DataFrame):        the training set which will be used for calculation of the similarities
@@ -39,10 +39,10 @@ class TextClassifier:
     def __init__(self, doc_id: int):
         self.document = Document(doc_id) if doc_id not in TextClassifier.all_documents \
                                         else TextClassifier.all_documents[doc_id]
-        self.similarity = {}
+        self.similarities_dict = {}
         self.sorted_similarities = None
 
-    def update_similarity_dic(self, missing_doc_id) -> dict:
+    def update_similarities_dict(self, missing_doc_id) -> dict:
         """Create the similarity dictionary for a target document by calculating its similarity to documents from
         the training set.
 
@@ -65,12 +65,12 @@ class TextClassifier:
                 TextClassifier.all_documents[doc_id] = Document(doc_id)
             doc_id_pair = (min(self.document.doc_id, doc_id),  max(self.document.doc_id, doc_id))
             if doc_id_pair in TextClassifier.all_similarities:
-                self.similarity[doc_id] = TextClassifier.all_similarities[doc_id_pair]
+                self.similarities_dict[doc_id] = TextClassifier.all_similarities[doc_id_pair]
             else:
                 curr_cos = self.document.cosine_similarity(TextClassifier.all_documents[doc_id])
                 TextClassifier.all_similarities[doc_id_pair] = curr_cos
-                self.similarity[doc_id] = curr_cos
-        return self.similarity
+                self.similarities_dict[doc_id] = curr_cos
+        return self.similarities_dict
 
     def classify(self, nb_neighbors: int, weighted: bool=False) -> str:
         """Calculates and returns the predicted class for a target document.
@@ -88,10 +88,10 @@ class TextClassifier:
         Returns:
             The predicted class of the target document.
         """
-        values_missing_from_similarities = set(TextClassifier.training_set) - self.similarity.keys()
+        values_missing_from_similarities = set(TextClassifier.training_set) - self.similarities_dict.keys()
         if values_missing_from_similarities:  # checks if the current training set has new values and insert them
-            self.update_similarity_dic(values_missing_from_similarities)
-            self.sorted_similarities = sorted(self.similarity.items(), key=operator.itemgetter(1), reverse=True)
+            self.update_similarities_dict(values_missing_from_similarities)
+            self.sorted_similarities = sorted(self.similarities_dict.items(), key=operator.itemgetter(1), reverse=True)
 
         while True:
             votes_per_classes = {'business': 0, 'politics': 0, 'sport': 0, 'technology': 0}
