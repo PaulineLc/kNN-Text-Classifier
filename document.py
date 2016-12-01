@@ -17,13 +17,23 @@ class Document:
                       computation.
                         Formula = square_root(sum(square(term_occurrence)))
                         None until it is called.
+        similarities: a dictionary in the format {other_dic_id: cosine_similarity} to store the cosine similarities
+                        that were already calculated and save computation time.
+    Class attributes:
+        all_documents (dict[int, Document]):    a list that contains all the documents previously created. It saves
+                                                computation at runtime by reusing documents instead of creating similar
+                                                ones.
     """
+
+    all_documents = {}
 
     def __init__(self, doc_id: int):
         self.doc_id = doc_id
         self._bag_of_words = None
         self._label = None
         self._vector_norm = None
+        self.similarities = {}
+        Document.all_documents[doc_id] = self
 
     @property
     def bag_of_words(self) -> Dict[int, int]:
@@ -106,13 +116,18 @@ class Document:
         Returns:
             The cosine similarity between the target document and the document from the training set.
         """
+        if other_doc.doc_id in self.similarities:
+            return self.similarities[other_doc.doc_id]
         numerator = 0
         for term in self.bag_of_words:
             if term in other_doc.bag_of_words:
                 numerator += self.bag_of_words[term] * other_doc.bag_of_words[term]
         denominator_1 = other_doc.vector_norm
         denominator_2 = self.vector_norm
-        return numerator / (denominator_1 * denominator_2)
+        cosine_value = numerator / (denominator_1 * denominator_2)
+        self.similarities[other_doc.doc_id] = cosine_value
+        other_doc.similarities[self.doc_id] = cosine_value
+        return cosine_value
 
     def __eq__(self, other: 'Document') -> bool:
         """Implementation of the equality comparator for the Document class.

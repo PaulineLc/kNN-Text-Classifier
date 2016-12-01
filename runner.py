@@ -1,9 +1,10 @@
 from Assignment.dataset import Dataset
 from Assignment.classifier import TextClassifier
 
-if __name__ == "__main__":
-    Dataset.define_article_data(data_file='data/news_articles.mtx')
-    Dataset.define_article_labels('data/news_articles.labels')
+
+def run():
+    Dataset.define_article_data('Assignment/data/news_articles.mtx')
+    Dataset.define_article_labels('Assignment/data/news_articles.labels')
 
     acc_no_weight, acc_weight = TextClassifier.calculate_accuracy(method=0, split=0.7)
 

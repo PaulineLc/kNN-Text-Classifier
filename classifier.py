@@ -20,29 +20,17 @@ class TextClassifier:
                                                 to the target document.
         test_set (pandas.DataFrame):            the test set which will be used to calculate the accuracy of the
                                                 classifier.
-        all_documents (dict[int, Document]):    a list that contains all the documents previously created. It saves
-                                                computation at runtime by reusing documents instead of creating similar
-                                                ones.
-        all_similarities (dict[int, dict]):     a dictionary of all previously computer cosine similarities so as to
-                                                avoid computing the same value twice (e.g. between document 1 and
-                                                document 5 then between document 5 and document 1). The format of this
-                                                dictionary is as follow:
-                                                {(doc_id1, doc_id2: cosine_similarity} where doc_id1 is the lowest of
-                                                both doc_id, and doc_id2 is the highest.
     """
 
     training_set = None
     test_set = None
-    all_documents = {}  # created to store the bags of words and avoid calculating the same one twice.
-    all_similarities = {}
 
     def __init__(self, doc_id: int):
-        self.document = Document(doc_id) if doc_id not in TextClassifier.all_documents \
-                                        else TextClassifier.all_documents[doc_id]
+        self.document = Document(doc_id) if doc_id not in Document.all_documents else Document.all_documents[doc_id]
         self.similarities_dict = {}
         self.sorted_similarities = None
 
-    def update_similarities_dict(self, missing_doc_id) -> dict:
+    def update_similarities_dict(self) -> dict:
         """Create the similarity dictionary for a target document by calculating its similarity to documents from
         the training set.
 
@@ -58,18 +46,13 @@ class TextClassifier:
             The dictionary listing the documents from the training set and their similarity to the target document.
         """
 
-        for doc_id in missing_doc_id:
+        for doc_id in TextClassifier.training_set:
             if doc_id == self.document.doc_id:
                 continue  # ignore doc_id if it is the same document; useful in case training set = entire dataset
-            if doc_id not in TextClassifier.all_documents:
-                TextClassifier.all_documents[doc_id] = Document(doc_id)
-            doc_id_pair = (min(self.document.doc_id, doc_id),  max(self.document.doc_id, doc_id))
-            if doc_id_pair in TextClassifier.all_similarities:
-                self.similarities_dict[doc_id] = TextClassifier.all_similarities[doc_id_pair]
-            else:
-                curr_cos = self.document.cosine_similarity(TextClassifier.all_documents[doc_id])
-                TextClassifier.all_similarities[doc_id_pair] = curr_cos
-                self.similarities_dict[doc_id] = curr_cos
+            if doc_id not in Document.all_documents:
+                Document(doc_id)  # create document so it is added to the list of all documents
+            curr_cosine = self.document.cosine_similarity(Document.all_documents[doc_id])
+            self.similarities_dict[doc_id] = curr_cosine
         return self.similarities_dict
 
     def classify(self, nb_neighbors: int, weighted: bool=False) -> str:
@@ -89,16 +72,16 @@ class TextClassifier:
         Returns:
             The predicted class of the target document.
         """
-        values_missing_from_similarities = set(TextClassifier.training_set) - self.similarities_dict.keys()
-        if values_missing_from_similarities:  # checks if the current training set has new values and insert them
-            self.update_similarities_dict(values_missing_from_similarities)
+
+        if not self.similarities_dict:  # checks if the current training set has new values and insert them
+            self.update_similarities_dict()
             self.sorted_similarities = sorted(self.similarities_dict.items(), key=operator.itemgetter(1), reverse=True)
 
         while True:
             votes_per_classes = dict()
             for i in range(nb_neighbors):
                 current_doc_id = self.sorted_similarities[i][0]
-                current_doc_class = TextClassifier.all_documents[current_doc_id].label
+                current_doc_class = Document.all_documents[current_doc_id].label
                 if current_doc_class not in votes_per_classes:
                     votes_per_classes[current_doc_class] = 0  # create class entry in the dictionary
                 if weighted:
