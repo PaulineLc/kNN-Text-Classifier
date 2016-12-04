@@ -3,7 +3,7 @@ import numpy as np
 from typing import List
 
 
-class Dataset:
+class Dataset(pd.DataFrame):
     """This class acts as a container for the text data
 
     Class attributes:
@@ -13,6 +13,7 @@ class Dataset:
 
     article_data = None
     article_labels = None
+    word_bank_size = 0
 
     @classmethod
     def define_article_data(cls, data_file: str) -> None:
@@ -21,7 +22,9 @@ class Dataset:
         Args:
             data_file: the location of the data file
         """
-        cls.article_data = pd.read_csv(data_file, sep=" ", skiprows=2, names=['doc_id', 'term_id', 'nb_occurrences'])
+        df = pd.read_csv(data_file, sep=" ", skiprows=1, names=['doc_id', 'term_id', 'nb_occurrences'])
+        cls.word_bank_size = int(df.iloc[[0]]['term_id'])
+        cls.article_data = df.drop(df.index[0])
 
     @classmethod
     def define_article_labels(cls, label_file: str) -> None:
@@ -76,6 +79,7 @@ class Dataset:
         for i in range(k):
             all_folds[i] = dataset[fold_size * i: fold_size * i + fold_size]
         return all_folds
+
 
     @staticmethod
     def concatenate(dfs: List[pd.DataFrame]) -> pd.DataFrame:

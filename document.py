@@ -1,6 +1,5 @@
 from Assignment.dataset import Dataset
-from typing import Dict
-import math
+import numpy as np
 
 
 class Document:
@@ -32,11 +31,11 @@ class Document:
         self._bag_of_words = None
         self._label = None
         self._vector_norm = None
-        self.similarities = {}
+        self.cosine_similarities = {}
         Document.all_documents[doc_id] = self
 
     @property
-    def bag_of_words(self) -> Dict[int, int]:
+    def bag_of_words(self) -> np.array:
         """Returns the bag of words of the document.
 
         If the bag of words has not been created, it will create it.
@@ -44,7 +43,7 @@ class Document:
         Returns:
             The bag of word
         """
-        if not self._bag_of_words:
+        if self._bag_of_words is None:
             self._bag_of_words = self._create_bag_of_words()
         return self._bag_of_words
 
@@ -74,16 +73,16 @@ class Document:
             self._vector_norm = self._create_vector_norm()
         return self._vector_norm
 
-    def _create_bag_of_words(self) -> Dict[int, int]:
+    def _create_bag_of_words(self) -> np.array:
         """Computes the bag of words of the document.
 
         Returns:
             a dictionary of all (term_id, number of occurrences) of the terms present in the document.
         """
         df = Dataset.article_data.loc[Dataset.article_data['doc_id'] == self.doc_id].reset_index()
-        bag_of_words = {}
+        bag_of_words = np.array([0] * Dataset.word_bank_size)
         for i in range(df.shape[0]):
-            bag_of_words[df['term_id'][i]] = df['nb_occurrences'][i]
+            bag_of_words[df['term_id'][i] - 1] = df['nb_occurrences'][i]
         return bag_of_words
 
     def _create_vector_norm(self) -> float:
@@ -92,7 +91,7 @@ class Document:
         Returns:
             The vector norm of the document.
         """
-        return math.sqrt(sum(map(lambda x: x * x, self.bag_of_words.values())))
+        return np.linalg.norm(self.bag_of_words)
 
     def _create_label(self) -> str:
         """Get the category (label) of a document.
@@ -116,17 +115,18 @@ class Document:
         Returns:
             The cosine similarity between the target document and the document from the training set.
         """
-        if other_doc.doc_id in self.similarities:
-            return self.similarities[other_doc.doc_id]
-        numerator = 0
-        for term in self.bag_of_words:
-            if term in other_doc.bag_of_words:
-                numerator += self.bag_of_words[term] * other_doc.bag_of_words[term]
+        if other_doc.doc_id in self.cosine_similarities:
+            return self.cosine_similarities[other_doc.doc_id]
+        cosine_value = self._calculate_cosine_similarity(other_doc)
+        self.cosine_similarities[other_doc.doc_id] = cosine_value
+        other_doc.cosine_similarities[self.doc_id] = cosine_value
+        return cosine_value
+
+    def _calculate_cosine_similarity(self, other_doc: 'Document'):
+        numerator = np.dot(self.bag_of_words, other_doc.bag_of_words)
         denominator_1 = other_doc.vector_norm
         denominator_2 = self.vector_norm
         cosine_value = numerator / (denominator_1 * denominator_2)
-        self.similarities[other_doc.doc_id] = cosine_value
-        other_doc.similarities[self.doc_id] = cosine_value
         return cosine_value
 
     def __eq__(self, other: 'Document') -> bool:

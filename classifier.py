@@ -100,7 +100,7 @@ class TextClassifier:
             nb_neighbors -= 1  # else, classify text using 1 fewer neighbours until there is no tie
 
     @classmethod
-    def calculate_accuracy(cls, method: int = 1, split: float=0) -> List[float]:
+    def calculate_accuracy(cls, method: int=1, split: float=0, nb_neighbors=0) -> List[float]:
         """Calculates and returns the accuracy of the classifier for both unweighted and weighted kNN classification.
 
         The training set and the testing set must be set prior to calling this method.
@@ -115,6 +115,8 @@ class TextClassifier:
                                 if method = 1, the number of folds will be set to 10. If there are less than 10 examples
                                 in the entire dataset, k will be set to the length of the dataset (and therefore the
                                 accuracy will be calculated with a leave-one-out approach)
+            nb_neighbors: The number of neighbors to be used in the kNN. If not set, a random number of neighboors will
+                           be used.
 
         Returns:
             a list containing the unweighted kNN accuracy at index 0, and the weighted kNN accuracy at index 1
@@ -129,20 +131,18 @@ class TextClassifier:
                 a list containing the percentage of correctly classified examples using an unweighted kNN at index 0,
                 and the percentage of correctly classified examples using a weighted kNN at index 1.
             """
-            acc_results_unweighted = 0
-            acc_results_weighted = 0
-            size_training_set = len(TextClassifier.training_set)
+            nb_accurate_predictions_unweighted = 0
+            nb_accurate_predictions_weighted = 0
             for doc_id in cls.test_set:
                 clf = TextClassifier(doc_id)
-                nb_neighbors = random.randint(1, size_training_set if size_training_set < 10 else 10)
                 predicted_class_unweighted = clf.classify(nb_neighbors, weighted=False)
                 predicted_class_weighted = clf.classify(nb_neighbors, weighted=True)
                 actual_class = clf.document.label
                 if predicted_class_unweighted == actual_class:
-                    acc_results_unweighted += 1
+                    nb_accurate_predictions_unweighted += 1
                 if predicted_class_weighted == actual_class:
-                    acc_results_weighted += 1
-            return acc_results_unweighted, acc_results_weighted
+                    nb_accurate_predictions_weighted += 1
+            return nb_accurate_predictions_unweighted, nb_accurate_predictions_weighted
 
         def calculate_with_training_set() -> List[float]:
             """Inner class. Calculates the accuracy of the classifier using a training set
@@ -174,6 +174,11 @@ class TextClassifier:
                 accuracy_weighted += nb_accurate_results_weighted / test_set_size
             return accuracy_unweighted / k, accuracy_weighted / k
 
+        if nb_neighbors <= 0:
+            if not isinstance(nb_neighbors, int):
+                raise Exception("Invalid input: \"{}\". nb_neighbors should be an integer.".format(nb_neighbors))
+            size_training_set = len(TextClassifier.training_set)
+            nb_neighbors = random.randint(1, size_training_set if size_training_set < 10 else 10)
         if method == 0:
             if split == 0:
                 training_set_percentage = 0.7
@@ -189,7 +194,7 @@ class TextClassifier:
                 k = 10 if len_dataset >= 10 else len_dataset
             else:
                 if not isinstance(split, int):
-                    raise Exception("Invalid split input: \"{}\". Split should be an integer.".format(split))
+                    raise Exception("Invalid input: \"{}\". split should be an integer.".format(split))
                 k = split
             return calculate_with_k_fold_cross_validation()
 
