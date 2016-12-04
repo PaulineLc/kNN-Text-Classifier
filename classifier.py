@@ -100,7 +100,7 @@ class TextClassifier:
             nb_neighbors -= 1  # else, classify text using 1 fewer neighbours until there is no tie
 
     @classmethod
-    def calculate_accuracy(cls, method: int=1, split: float=0, nb_neighbors=0) -> List[float]:
+    def calculate_accuracy(cls, method: int=1, split: float=0, nb_neighbors=1) -> List[float]:
         """Calculates and returns the accuracy of the classifier for both unweighted and weighted kNN classification.
 
         The training set and the testing set must be set prior to calling this method.
@@ -177,8 +177,6 @@ class TextClassifier:
         if nb_neighbors <= 0:
             if not isinstance(nb_neighbors, int):
                 raise Exception("Invalid input: \"{}\". nb_neighbors should be an integer.".format(nb_neighbors))
-            size_training_set = len(TextClassifier.training_set)
-            nb_neighbors = random.randint(1, size_training_set if size_training_set < 10 else 10)
         if method == 0:
             if split == 0:
                 training_set_percentage = 0.7
