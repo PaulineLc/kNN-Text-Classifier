@@ -3,7 +3,7 @@ import numpy as np
 from typing import List
 
 
-class Dataset(pd.DataFrame):
+class Dataset:
     """This class acts as a container for the text data
 
     Class attributes:
@@ -28,7 +28,9 @@ class Dataset(pd.DataFrame):
 
     @classmethod
     def define_article_labels(cls, label_file: str) -> None:
-        """Set article labels
+        """Set article labels.
+
+        As the labels may come ordered, they are shuffled.
 
         Args:
             label_file: the location of the label file

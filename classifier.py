@@ -1,5 +1,4 @@
 import operator
-import random
 from typing import List
 from Assignment.document import Document
 from Assignment.dataset import Dataset
@@ -14,6 +13,12 @@ class TextClassifier:
     Attributes:
         document (Document): the target document.
         similarities_dict (dict): a dictionary of similarities of the target document to documents from the training set
+                                  format: {document_id: cosine_similarity}
+        sorted_similarities (dict): a nested list of similarities in the format (doc_id, cosine_similarity) of the
+                                    that represents the cosine similarities of the target document to documents from the
+                                    training set. It is sorted per cosine similarity, so that the highest cosine
+                                    similarity will be found in the nested list at index 0 and the lowest similarity
+                                    will be found on the nested list at index -1 (last element of the list)
 
     Class attributes:
         training_set (pandas.DataFrame):        the training set which will be used for calculation of the similarities
@@ -37,7 +42,7 @@ class TextClassifier:
         The similarity is calculated using the cosine similarity between the two documents.
 
         The resulting dictionary will be in the format {document_id: cosine_similarity} where document_id represents
-        a document from thr training set and cosine_similarity represents the cosine similarity between the target
+        a document from the training set and cosine_similarity represents the cosine similarity between the target
         document and the document from the training set.
 
         There will be one entry in the dictionary per document in the training set.
@@ -103,10 +108,10 @@ class TextClassifier:
     def calculate_accuracy(cls, method: int=1, split: float=0, nb_neighbors=1) -> List[float]:
         """Calculates and returns the accuracy of the classifier for both unweighted and weighted kNN classification.
 
-        The training set and the testing set must be set prior to calling this method.
+        The Dataset class must be populated with the label and article data prior to calling this method.
 
         Args:
-            method: if method = 0, the accuracy will be calculated using a training and a testing set.
+            method: if method = 0, the accuracy will be calculated using a simple hold-out startegy.
                     if method = 1, the accuracy will be calculated using k-fold cross validation.
                     Default: method = 1
             split:  if method = 0, split represents the percentage of the dataset to be used as training set.
@@ -115,21 +120,21 @@ class TextClassifier:
                                 if method = 1, the number of folds will be set to 10. If there are less than 10 examples
                                 in the entire dataset, k will be set to the length of the dataset (and therefore the
                                 accuracy will be calculated with a leave-one-out approach)
-            nb_neighbors: The number of neighbors to be used in the kNN. If not set, a random number of neighboors will
-                           be used.
+            nb_neighbors: The number of neighbors to be used in the kNN. It not set, the number of neighbors will be set
+                          to 1.
 
         Returns:
             a list containing the unweighted kNN accuracy at index 0, and the weighted kNN accuracy at index 1
         """
 
         def get_subset_accuracy() -> List[int]:
-            """ Inner class evaluate the classifier on a training and testing set.
+            """Nested method evaluate the classifier on a training and testing set.
 
             Takes no argument as it will use the training and testing set defined at a class level.
 
             Returns:
-                a list containing the percentage of correctly classified examples using an unweighted kNN at index 0,
-                and the percentage of correctly classified examples using a weighted kNN at index 1.
+                a list containing the number of correctly classified examples using an unweighted kNN at index 0,
+                and the number of correctly classified examples using a weighted kNN at index 1.
             """
             nb_accurate_predictions_unweighted = 0
             nb_accurate_predictions_weighted = 0
@@ -145,7 +150,7 @@ class TextClassifier:
             return nb_accurate_predictions_unweighted, nb_accurate_predictions_weighted
 
         def calculate_with_training_set() -> List[float]:
-            """Inner class. Calculates the accuracy of the classifier using a training set
+            """Nested method. Calculates the accuracy of the classifier using a simple hold-out strategy.
 
             Returns:
                 a list containing the number of correctly classified examples using an unweighted kNN at index 0,
@@ -174,6 +179,7 @@ class TextClassifier:
                 accuracy_weighted += nb_accurate_results_weighted / test_set_size
             return accuracy_unweighted / k, accuracy_weighted / k
 
+        # method-level code starts below.
         if nb_neighbors <= 0:
             if not isinstance(nb_neighbors, int):
                 raise Exception("Invalid input: \"{}\". nb_neighbors should be an integer.".format(nb_neighbors))
